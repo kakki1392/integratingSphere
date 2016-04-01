@@ -4,7 +4,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-namespace integrating_IS{
+namespace photon_IS{
 
 class Generator{
 	public:

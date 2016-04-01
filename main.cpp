@@ -1,7 +1,9 @@
 #include "Coord.h"
 #include "Dir.h"
 #include "Photon.h"
+#include "RandomGenerator.h"
 #include <iostream>
+
 
 using namespace photon_IS;
 
@@ -22,7 +24,13 @@ int main(){
 	Photon p;
 	Photon p2(e,n);
 
-	std::cout << p2.u.u_z;
+	std::cout << p2.u.u_z << "\n";
+
+	Generator G(1);
+	std::cout << G.uniform() << "\n";
+	std::cout << G.count << "\n";
+
+
 
 
 

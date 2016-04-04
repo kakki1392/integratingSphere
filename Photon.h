@@ -15,6 +15,7 @@ class Photon{
 		Coord r;
 		Dir u;
 		double W;
+		double s_tot; //Total distance travelled
 		size_t N_w;
 		size_t N_s;
 

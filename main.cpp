@@ -125,7 +125,7 @@ int main(){
 		}
 		vec collisions = conv_to< vec >::from(cols);
 		vec paths = conv_to< vec >::from(path);
-		uvec h_collisions = hist(collisions, 100);
+		uvec h_collisions = hist(collisions, linspace<vec>(1,200,200));
 		h_collisions.save("h_collisions.dat", raw_ascii);
 		uvec h_paths = hist(paths,1000);
 		h_paths.save("h_paths.dat", raw_ascii);

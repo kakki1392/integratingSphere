@@ -6,6 +6,7 @@
 #include "Photon.h"
 #include "RandomGenerator.h"
 #include <vector>
+#include <string>
 
 using namespace photon_IS;
 
@@ -26,4 +27,11 @@ double meanPathLength(std::vector<Photon> &P);
 
 double stddevPathLength(std::vector<Photon> &P, double &mean);
 
+void histCollisions(std::vector<Photon> &photons, std::string fileName);
+
+void histPathLength(std::vector<Photon> &photons, std::string fileName, double min_s, double max_s, size_t bins);
+
+
+
 #endif
+

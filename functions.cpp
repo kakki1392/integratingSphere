@@ -2,6 +2,8 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <armadillo>
 
 using namespace photon_IS;
 using namespace std;
@@ -115,4 +117,48 @@ double stddevPathLength(std::vector<Photon> &P, double &mean){
 	return sqrt(var/(N-1.0));
 }
 
+void histCollisions(vector<Photon> &photons, string fileName){
 
+	using namespace arma;
+	size_t N = photons.size();
+	uvec collision_counter(N);
+	for(size_t i=0; i<N; i++){
+		collision_counter(i) = photons[i].N_w;
+	}
+	size_t min_N_w = collision_counter.min();
+	size_t max_N_w = collision_counter.max();
+	size_t range = max_N_w - min_N_w + 1;
+
+	vec centers = linspace<vec>((double) min_N_w, (double) max_N_w, range);
+	vec collisions = conv_to< vec >::from(collision_counter);
+	uvec hist_int = hist(collisions, centers);
+	vec hist_double = conv_to< vec >::from(hist_int);
+	hist_double = hist_double/((double) N);
+
+	mat collision_hist(range,2);	
+	collision_hist.col(0) = centers;
+	collision_hist.col(1) = hist_double;
+	collision_hist.save(fileName, raw_ascii);
+}
+
+void histPathLength(vector<Photon> &photons, string fileName, double min_s, double max_s, size_t bins){
+	using namespace arma;
+	size_t N = photons.size();
+	vec path(N);
+	for(size_t i=0; i<N; i++){
+		path(i) = photons[i].N_w;
+	}
+	double min_s0 = path.min();
+	double max_s0 = path.max();
+
+	vec centers = linspace<vec>(min_s0, max_s0, bins);
+	vec paths = conv_to< vec >::from(path);
+	uvec hist_int = hist(paths, centers);
+	vec hist_double = conv_to< vec >::from(hist_int);
+	hist_double = hist_double/((double) N);
+
+	mat path_hist(bins,2);	
+	path_hist.col(0) = centers;
+	path_hist.col(1) = hist_double;
+	path_hist.save(fileName, raw_ascii);
+}

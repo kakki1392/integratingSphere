@@ -31,7 +31,9 @@ void histCollisions(std::vector<Photon> &photons, std::string fileName);
 
 void histPathLength(std::vector<Photon> &photons, std::string fileName, double min_s, double max_s, size_t bins);
 
+void savePhotons(std::vector<Photon> &photons, std::string fileName, double R, double rho, double N_photons, size_t seed);
 
+void traceSingleDiffuseInvariant(Photon &p, double &R, double &rho, size_t &lim, Generator &G);
 
 #endif
 

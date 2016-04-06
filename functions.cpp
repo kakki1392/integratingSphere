@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include <armadillo>
+#include <fstream>
+#include <iomanip>
 
 using namespace photon_IS;
 using namespace std;
@@ -67,6 +69,28 @@ void traceSingleDiffuse(Photon &p, double &R, double &rho, size_t &lim, Generato
 	}
 }
 
+void traceSingleDiffuseInvariant(Photon &p, double &R, double &rho, size_t &lim, Generator &G){
+	double s0 = 0.0;
+	//Move from initial position and direction
+	s0 = - 2.0*(p.u.u_x*p.r.x + p.u.u_y*p.r.y + p.u.u_z*p.r.z);
+	//diffuseLocal(p.u,G);
+	//s0 = 2.0*R*p.u.u_z;
+	p.s_tot += s0;
+	p.N_w ++;
+
+	while(p.N_w < lim){
+		if(G.uniform() < rho){
+			p.N_w ++;
+			diffuseLocal(p.u, G);
+			s0 = 2.0*R*p.u.u_z;
+			p.s_tot += s0;
+		}
+		else{
+			break;
+		}
+	}
+}
+
 void traceCollectionDiffuse(vector<Photon> &P, double &R, double &rho, size_t &lim, Generator &G){
 	for(size_t i=0; i<P.size(); i++){
 		traceSingleDiffuse(P[i], R, rho, lim, G);
@@ -98,13 +122,24 @@ double stddevNumberCollision(std::vector<Photon> &P, double &mean){
 }
 
 double meanPathLength(std::vector<Photon> &P){
+	//using namespace arma;
 	double s = 0.0;
+	//double s_test = 0.0;
 	size_t len = P.size();
+	//vec path(len);
 	for(size_t i=0; i<len; i++){
 		s += P[i].s_tot;
+		//path(i) = P[i].s_tot;
 	}
+	/*
+	path = sort(path);
+	for(size_t i=0; i<len; i++){
+		s_test += path(i);
+	}
+	*/
 	double N = (double) len;
 	return (s/N);
+	//return (s_test/N);
 }
 
 double stddevPathLength(std::vector<Photon> &P, double &mean){
@@ -162,3 +197,17 @@ void histPathLength(vector<Photon> &photons, string fileName, double min_s, doub
 	path_hist.col(1) = hist_double;
 	path_hist.save(fileName, raw_ascii);
 }
+
+void savePhotons(std::vector<Photon> &photons, std::string fileName, double R, double rho, double N_photons, size_t seed){
+
+	ofstream myFile;
+	myFile.open(fileName.c_str());
+	myFile << "#Radius: " << R << "\n" << "#Reflectivity: " << rho << "\n" << "#No. photons: "
+	       << N_photons << "\n" << "#Seed: " << seed << "\n";
+	myFile << "#N_w s_tot\n";
+	for(size_t i=0; i<N_photons;i++){
+		myFile << std::setprecision (17) << photons[i].N_w << " " << std::setprecision (17) << photons[i].s_tot << "\n";
+	}
+	myFile.close();
+}
+

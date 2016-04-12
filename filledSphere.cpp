@@ -16,18 +16,27 @@ using namespace std;
 
 int main(){
 
-	size_t seed = 4;
+	size_t seed = 100;
 	Generator G(seed);
 	double R = 1.0;
-	double rho = 0.99;
-	double p = 1e-6;
-	size_t collision_limit = 1000;
-	double max_s = 1000.0;
+	double a_s = 0.105/2.0;
+	double a_p = 0.125/2.0;
+	double b_s = 0.105/2.0;
+	double b_p = 0.125/2.0;
+	double D_e = 2.1*b_p;
+	double alpha = 1.2786;
+	double rho = 0.95;
+	double n = 1.0;
+	double NA = 0.22;
+	double cos_theta0 = sqrt(1.0 - (NA*NA)/(n*n));
+	double z_s = sqrt(R*R - 0.25*D_e*D_e);
+	size_t collision_limit = 5000;
 	double start = R*sqrt(1.0/3.0);
 	size_t N_photons = 1e6;
 	size_t bins = 1000;
 
 	vector<Photon> photons(N_photons);
+	initPhotons(photons, R, z_s, cos_theta0, a_s, b_s, G);
 
 	for(size_t i=0; i<N_photons; i++){
 		photons[i].r.x = start;
@@ -35,42 +44,25 @@ int main(){
 		photons[i].r.z = start;
 		diffuseLocal(photons[i].u, G);
 		photons[i].u = convertToGlobal(photons[i].u, photons[i].r, R);
-		//cout << "i: " << i << " s0: " << (-2.0*(photons[i].u.u_x*photons[i].r.x + photons[i].u.u_y*photons[i].r.y + photons[i].u.u_z*photons[i].r.z)) << endl;  //ERROR, s0 is not always positive!
-		traceSingleDiffuse(photons[i], R, rho, collision_limit, G);
+		//traceSingleDiffuse(photons[i], R, rho, collision_limit, G);
+		traceSingleDiffuseAbsorption(photons[i], R, rho, alpha, collision_limit, G);
 		//traceSingleDiffuseInvariant(photons[i], R, rho, collision_limit, G);
 	}
 	cout << "finished trace" << endl;
-	//savePhotons(photons, "data/emptySphereR1.0Rho0.99.dat", R, rho, N_photons, seed);
+	//savePhotons(photons, "data/filledSphere/filledSphere_Alpha1.2786_R1.0_Rho0.95.dat", R, rho, N_photons, seed);
 
 	//histCollisions(photons, "collisionDistr.dat");
 	//histPathLength(photons, "pathLengthDistr1.dat", 0.0, max_s, bins);
 
+	double Ps = psTheory(alpha,R);
 	double meanCollision = meanNumberCollision(photons);
 	cout << "mean collision: " << meanCollision << endl;
-	cout << "mean collision theoretical: " << (1.0/(1.0-rho)) << endl;
+	cout << "mean collision theoretical: " << (Ps/(1.0-Ps*rho)) << endl;
 	cout << "stddev collision: " << stddevNumberCollision(photons, meanCollision) << endl; 
 	double meanPath = meanPathLength(photons);
 	cout << "mean path: " << meanPath << endl;
-	cout << "mean path theoretical: " << (4.0*R/(3.0*(1.0-rho))) << endl;
+	cout << "mean path theoretical: " << ((1.0/alpha)*((1.0-Ps)/(1.0-rho*Ps))) << endl;
 	cout << "stddev path: " << stddevPathLength(photons, meanPath) << endl;
-	/*
-
-	{
-		using namespace arma;
-		vector<double> cols(N_photons);
-		vector<double> path(N_photons);
-		for(size_t i=0; i<N_photons; i++){
-			cols[i] = (double) photons[i].N_w;
-			path[i] = photons[i].s_tot;
-		}
-		vec collisions = conv_to< vec >::from(cols);
-		vec paths = conv_to< vec >::from(path);
-		uvec h_collisions = hist(collisions, linspace<vec>(1,200,200));
-		h_collisions.save("h_collisions.dat", raw_ascii);
-		uvec h_paths = hist(paths,1000);
-		h_paths.save("h_paths.dat", raw_ascii);
-	}
-	*/
-
 	return 0;
-}	
+}
+	

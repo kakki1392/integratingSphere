@@ -43,6 +43,14 @@ Dir convertToGlobal(Dir &u, Coord &r, double &R){
 	return u_global;
 }
 
+double drawPathLength(double &alpha, Generator &G){
+	return (-log(G.uniform())/alpha);
+}
+
+double psTheory(double &alpha, double &R){
+	return ((1.0/(2.0*alpha*alpha*R*R))*(1.0 - (1.0 + 2.0*alpha*R)*exp(-2.0*alpha*R)));
+}
+
 	
 
 void traceSingleDiffuse(Photon &p, double &R, double &rho, size_t &lim, Generator &G){
@@ -64,6 +72,51 @@ void traceSingleDiffuse(Photon &p, double &R, double &rho, size_t &lim, Generato
 			p.s_tot += s0;
 		}
 		else{
+			break;
+		}
+	}
+}
+
+void traceSingleDiffuseAbsorption(Photon &p, double &R, double &rho, double &alpha, size_t &lim, Generator &G){
+	double s0 = 0.0;
+	double path = drawPathLength(alpha, G);
+	//Move from initial position and direction
+	s0 = - 2.0*(p.u.u_x*p.r.x + p.u.u_y*p.r.y + p.u.u_z*p.r.z);
+	if(s0 < path){
+		p.s_tot += s0;
+		p.N_w ++;
+		path -= s0;
+	}
+	else{
+		p.s_tot = path;
+		return;
+	}
+
+	while(p.N_w < lim){
+		//Move to wall
+		p.r.x = p.r.x + s0*p.u.u_x;
+		p.r.y = p.r.y + s0*p.u.u_y;
+		p.r.z = p.r.z + s0*p.u.u_z;
+		//Reflect?
+		if(G.uniform() < rho){
+			//Yes
+		//	p.N_w ++;
+			diffuseLocal(p.u, G);
+			p.u = convertToGlobal(p.u, p.r, R);
+			s0 = - 2.0*(p.u.u_x*p.r.x + p.u.u_y*p.r.y + p.u.u_z*p.r.z);
+			//Can photon propagate distance s0?
+			if(s0 <= path){
+				p.N_w ++;
+				p.s_tot += s0;
+				path -= s0;
+			}
+			else{
+				p.s_tot += path;
+				break;
+			}
+		}
+		else{
+			//No
 			break;
 		}
 	}
@@ -122,7 +175,7 @@ double stddevNumberCollision(std::vector<Photon> &P, double &mean){
 }
 
 double meanPathLength(std::vector<Photon> &P){
-	//using namespace arma;
+	//using namespace arma; 
 	double s = 0.0;
 	//double s_test = 0.0;
 	size_t len = P.size();
@@ -142,11 +195,35 @@ double meanPathLength(std::vector<Photon> &P){
 	//return (s_test/N);
 }
 
+double meanPathLengthCollected(std::vector<Photon> &photons){
+	double s = 0.0;
+	size_t N = photons.size();
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			s += photons[i].s_tot;
+		}
+	}
+	double N_d = (double) N;
+	return (s/N);
+}
+
 double stddevPathLength(std::vector<Photon> &P, double &mean){
 	double var = 0.0;
 	size_t len = P.size();
 	for(size_t i=0; i<len; i++){
 		var += (P[i].s_tot - mean)*(P[i].s_tot - mean);
+	}
+	double N = (double) len;
+	return sqrt(var/(N-1.0));
+}
+
+double stddevPathLengthCollected(std::vector<Photon> &P, double &mean){
+	double var = 0.0;
+	size_t len = P.size();
+	for(size_t i=0; i<len; i++){
+		if(P[i].isCollected){
+			var += (P[i].s_tot - mean)*(P[i].s_tot - mean);
+		}
 	}
 	double N = (double) len;
 	return sqrt(var/(N-1.0));
@@ -206,8 +283,99 @@ void savePhotons(std::vector<Photon> &photons, std::string fileName, double R, d
 	       << N_photons << "\n" << "#Seed: " << seed << "\n";
 	myFile << "#N_w s_tot\n";
 	for(size_t i=0; i<N_photons;i++){
-		myFile << std::setprecision (17) << photons[i].N_w << " " << std::setprecision (17) << photons[i].s_tot << "\n";
+		myFile << photons[i].N_w << " " << std::setprecision (17) << photons[i].s_tot << "\n";
 	}
 	myFile.close();
+}
+
+
+void initPhotons(std::vector<Photon> &photons, double R, double z_s, double cos_theta0, double a_s, double b_s, Generator &G){
+
+	size_t N = photons.size();
+	for(size_t i=0; i<N; i++){
+		//random points inside unit circle
+		double chi_x = G.uniform();
+		double chi_y = G.uniform();
+		while((chi_x*chi_x + chi_y*chi_y) > 1.0){
+			chi_x = G.uniform();
+			chi_y = G.uniform();
+		}
+		//scaling
+		chi_x = a_s*chi_x;
+		chi_y = a_s*chi_y;
+		//set position
+		photons[i].r.z = z_s;
+		photons[i].r.x = chi_x - b_s;
+		photons[i].r.y = chi_y;
+		double chi_1 = G.uniform();
+		double chi_2 = G.uniform();
+		double z = (1.0 - cos_theta0)*chi_2 + cos_theta0;
+		//set direction
+		photons[i].u.u_z = -z;
+		photons[i].u.u_x = cos(2.0*M_PI*chi_1)*sqrt(1.0 - z*z);
+		photons[i].u.u_y = sin(2.0*M_PI*chi_1)*sqrt(1.0 - z*z);
+		//cout << "u norm: " << photons[i].u.norm() << endl;
+	}
+}
+
+
+void tracePhotonEmptyIS(Photon &p, double &R, double &rho, double &z_s, double &cos_theta0, double &a_p, double &b_p, size_t &lim, Generator &G){
+	//Move from initial position and direction
+	double dot_prod = p.r.x*p.u.u_x + p.r.y*p.u.u_y + p.r.z*p.u.u_z;
+//	cout << "dot_prod: " << dot_prod << endl;
+	double s0 = -dot_prod + sqrt(dot_prod*dot_prod + R*R - p.r.square());
+//	cout << "s0 first: " << s0 << endl;
+
+
+	p.s_tot += s0;
+	p.N_w ++;
+
+	while(p.N_w < lim){
+		//Move to wall
+		p.r.x = p.r.x + s0*p.u.u_x;
+		p.r.y = p.r.y + s0*p.u.u_y;
+		p.r.z = p.r.z + s0*p.u.u_z;
+		//cout << "R: " << p.r.norm() << endl;
+		//Reflect?
+		if(G.uniform() < rho){
+			//Yes
+		//	p.N_w ++;
+			diffuseLocal(p.u, G);
+			p.u = convertToGlobal(p.u, p.r, R);
+			s0 = - 2.0*(p.u.u_x*p.r.x + p.u.u_y*p.r.y + p.u.u_z*p.r.z);
+			//Can photon propagate distance s0?
+			if((p.r.z + s0*p.u.u_z) > z_s){
+				if(p.u.u_z < cos_theta0){
+					p.isAbsorbedEntrance = true;
+					break;
+				}
+				else{
+					double s = (z_s - p.r.z)/p.u.u_z;
+					//cout << "s: " << s << endl;
+					double x = p.r.x + s*p.u.u_x;
+					double y = p.r.y + s*p.u.u_y;
+					if(((x-b_p)*(x-b_p) + y*y) < (a_p*a_p)){
+						p.isCollected = true;
+						//cout << "collected!" << endl;
+						p.s_tot += s;
+						break;
+					}
+					else{
+						p.isAbsorbedEntrance = true;
+						break;
+					}
+				}
+			}
+			else{
+				p.N_w ++;
+				p.s_tot += s0;
+			}
+		}
+		else{
+			//No
+			p.isAbsorbedWall = true;
+			break;
+		}
+	}
 }
 

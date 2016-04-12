@@ -12,6 +12,9 @@ class Coord{
 		double x;
 		double y;
 		double z;
+		double square();
+		double norm();
+		
 	private:
 
 };

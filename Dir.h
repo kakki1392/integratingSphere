@@ -10,6 +10,8 @@ class Dir{
 		double u_x;
 		double u_y;
 		double u_z;
+		double square();
+		double norm();
 
 	private:
 

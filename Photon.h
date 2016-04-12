@@ -16,8 +16,15 @@ class Photon{
 		Dir u;
 		double W;
 		double s_tot; //Total distance travelled
-		size_t N_w;
-		size_t N_s;
+		size_t N_w;   //Number of wall collisions
+		size_t N_s;   //Number of interior scattering events
+
+		bool isCollected;
+		bool isAbsorbedInterior;
+		bool isAbsorbedWall;
+		bool isAbsorbedEntrance;
+		bool isAbsorbedPort;
+
 
 
 	private:

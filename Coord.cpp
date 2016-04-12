@@ -1,4 +1,5 @@
 #include "Coord.h"
+#include <cmath>
 using namespace photon_IS;
 
 Coord::Coord(){
@@ -11,6 +12,14 @@ Coord::Coord(double x0, double y0, double z0){
 	x = x0;
 	y = y0;
 	z = z0;
+}
+
+double Coord::square(){
+	return (x*x + y*y + z*z);
+}
+
+double Coord::norm(){
+	return std::sqrt(this->square());
 }
 
 /*

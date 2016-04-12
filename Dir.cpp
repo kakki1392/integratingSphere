@@ -1,4 +1,5 @@
 #include "Dir.h"
+#include <cmath>
 
 using namespace photon_IS;
 
@@ -12,6 +13,14 @@ Dir::Dir(double u_x0, double u_y0, double u_z0){
 	u_x = u_x0;
 	u_y = u_y0;
 	u_z = u_z0;
+}
+
+double Dir::square(){
+	return (u_x*u_x + u_y*u_y + u_z*u_z);
+}
+
+double Dir::norm(){
+	return std::sqrt(this->square());
 }
 
 /*

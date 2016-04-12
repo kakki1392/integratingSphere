@@ -48,5 +48,8 @@ void traceSingleDiffuseInvariant(Photon &p, double &R, double &rho, size_t &lim,
 void initPhotons(std::vector<Photon> &photons, double R, double z_s, double cos_theta0, double a_s, double b_s, Generator &G);
 
 void tracePhotonEmptyIS(Photon &p, double &R, double &rho, double &z_s, double &cos_theta0, double &a_p, double &b_p, size_t &lim, Generator &G);
+
+void getStats(std::vector<Photon> &photons, double &eps_c, double &eps_e, double &eps_w, size_t &N);
+
 #endif
 

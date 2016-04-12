@@ -379,3 +379,38 @@ void tracePhotonEmptyIS(Photon &p, double &R, double &rho, double &z_s, double &
 	}
 }
 
+void getStats(std::vector<Photon> &photons, double &eps_c, double &eps_e, double &eps_w, size_t &N){
+	double N_d = (double) N;
+	eps_c = 0.0;
+	eps_e = 0.0;
+	eps_w = 0.0;
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			eps_c += 1.0;
+		}else if(photons[i].isAbsorbedEntrance){
+			eps_e += 1.0;
+		}else{ 
+			eps_w += 1.0;
+		}
+	}
+	eps_c = eps_c/N_d;
+	eps_e = eps_e/N_d;
+	eps_w = eps_w/N_d;
+}
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

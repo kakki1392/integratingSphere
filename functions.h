@@ -49,7 +49,14 @@ void initPhotons(std::vector<Photon> &photons, double R, double z_s, double cos_
 
 void tracePhotonEmptyIS(Photon &p, double &R, double &rho, double &z_s, double &cos_theta0, double &a_p, double &b_p, size_t &lim, Generator &G);
 
+void tracePhotonAbsorbingIS(Photon &p, double &R, double &rho, double &z_s, double &cos_theta0, double &a_p, double &b_p, size_t &lim, double &alpha, Generator &G);
+
 void getStats(std::vector<Photon> &photons, double &eps_c, double &eps_e, double &eps_w, size_t &N);
 
+double getMeanPathLength(std::vector<Photon> &photons, size_t &N);
+
+double getStdPathLength(std::vector<Photon> &photons, double meanPath, size_t &N);
+
+void savePaths(std::vector<Photon> &photons, std::string fileName, size_t &N);
 #endif
 

@@ -294,11 +294,15 @@ void initPhotons(std::vector<Photon> &photons, double R, double z_s, double cos_
 	size_t N = photons.size();
 	for(size_t i=0; i<N; i++){
 		//random points inside unit circle
-		double chi_x = G.uniform();
-		double chi_y = G.uniform();
+		//double chi_x = G.uniform(); //ERROR HERE, THIS IS ONLY FIRST QUADRANT
+		//double chi_y = G.uniform();
+		double chi_x = 2.0*G.uniform() - 1.0;
+		double chi_y = 2.0*G.uniform() - 1.0;
 		while((chi_x*chi_x + chi_y*chi_y) > 1.0){
-			chi_x = G.uniform();
-			chi_y = G.uniform();
+			//chi_x = G.uniform();
+			//chi_y = G.uniform();
+			chi_x = 2.0*G.uniform() - 1.0;
+			chi_y = 2.0*G.uniform() - 1.0;
 		}
 		//scaling
 		chi_x = a_s*chi_x;
@@ -345,13 +349,13 @@ void tracePhotonEmptyIS(Photon &p, double &R, double &rho, double &z_s, double &
 			s0 = - 2.0*(p.u.u_x*p.r.x + p.u.u_y*p.r.y + p.u.u_z*p.r.z);
 			//Can photon propagate distance s0?
 			if((p.r.z + s0*p.u.u_z) > z_s){
+				double s = (z_s - p.r.z)/p.u.u_z;
 				if(p.u.u_z < cos_theta0){
 					p.isAbsorbedEntrance = true;
+					p.s_tot += s;
 					break;
 				}
 				else{
-					double s = (z_s - p.r.z)/p.u.u_z;
-					//cout << "s: " << s << endl;
 					double x = p.r.x + s*p.u.u_x;
 					double y = p.r.y + s*p.u.u_y;
 					if(((x-b_p)*(x-b_p) + y*y) < (a_p*a_p)){
@@ -362,6 +366,7 @@ void tracePhotonEmptyIS(Photon &p, double &R, double &rho, double &z_s, double &
 					}
 					else{
 						p.isAbsorbedEntrance = true;
+						p.s_tot += s;
 						break;
 					}
 				}
@@ -398,11 +403,127 @@ void getStats(std::vector<Photon> &photons, double &eps_c, double &eps_e, double
 	eps_w = eps_w/N_d;
 }
 		
+double getMeanPathLength(std::vector<Photon> &photons, size_t &N){
+	double meanPath = 0.0;
+	double N_collected = 0.0;
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			meanPath += photons[i].s_tot;
+			N_collected += 1.0;
+		}
+	}
+	meanPath = (meanPath/N_collected);
+	return meanPath;
+}
+
+double getStdPathLength(std::vector<Photon> &photons, double meanPath, size_t &N){
+	double stdPath = 0.0;
+	double N_collected = 0.0;
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			stdPath += (photons[i].s_tot - meanPath)*(photons[i].s_tot - meanPath);
+			N_collected += 1.0;
+		}
+	}
+	if(N_collected < 1.0){
+		cout << "BAD" << endl;
+	}
+	stdPath = std::sqrt(stdPath/(N_collected-1.0)); //WAS ERROR HERE
+	return stdPath;
+}
+
+void savePaths(std::vector<Photon> &photons, std::string fileName, size_t &N){
+	ofstream myFile;
+	myFile.open(fileName.c_str());
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			myFile << setprecision(17) << photons[i].s_tot << endl;
+		}
+	}
+	myFile.close();
+}
+
+void tracePhotonAbsorbingIS(Photon &p, double &R, double &rho, double &z_s, double &cos_theta0, double &a_p, double &b_p, size_t &lim, double &alpha, Generator &G){
+	double s0 = 0.0;
+	double path = drawPathLength(alpha, G);
+	//Move from initial position and direction
+	double dot_prod = p.r.x*p.u.u_x + p.r.y*p.u.u_y + p.r.z*p.u.u_z;
+//	cout << "dot_prod: " << dot_prod << endl;
+	s0 = -dot_prod + sqrt(dot_prod*dot_prod + R*R - p.r.square());
+//	cout << "s0 first: " << s0 << endl;
 
 
 
 
+	if(s0 < path){
+		p.s_tot += s0;
+		p.N_w ++;
+		path -= s0;
+	}
+	else{
+		p.s_tot = path;
+		p.isAbsorbedInterior = true;
+		//cout << "Absorbed from launch!" << endl;
+		return;
+	}
 
+	while(p.N_w < lim){
+		//Move to wall
+		p.r.x = p.r.x + s0*p.u.u_x;
+		p.r.y = p.r.y + s0*p.u.u_y;
+		p.r.z = p.r.z + s0*p.u.u_z;
+		//Reflect?
+		if(G.uniform() < rho){
+			//Yes
+		//	p.N_w ++;
+			diffuseLocal(p.u, G);
+			p.u = convertToGlobal(p.u, p.r, R);
+			s0 = - 2.0*(p.u.u_x*p.r.x + p.u.u_y*p.r.y + p.u.u_z*p.r.z);
+			//Can photon propagate distance s0?
+			if(s0 < path){
+				//Is photon in fiber area?
+				if((p.r.z + s0*p.u.u_z) > z_s){
+					double s = (z_s - p.r.z)/p.u.u_z;
+					if(p.u.u_z < cos_theta0){
+						p.isAbsorbedEntrance = true;
+						p.s_tot += s;
+						break;
+					}
+					else{
+						double x = p.r.x + s*p.u.u_x;
+						double y = p.r.y + s*p.u.u_y;
+						if(((x-b_p)*(x-b_p) + y*y) < (a_p*a_p)){
+							p.isCollected = true;
+							//cout << "collected!" << endl;
+							p.s_tot += s;
+							break;
+						}
+						else{
+							p.isAbsorbedEntrance = true;
+							p.s_tot += s;
+							break;
+						}
+					}
+				}
+				else{
+					p.N_w ++;
+					p.s_tot += s0;
+					path -= s0;
+				}
+			}
+			else{
+				p.isAbsorbedInterior = true;
+				p.s_tot += path;
+				//cout << "Absorbed interior!" << endl;
+				break;
+			}
+		}
+		else{
+			p.isAbsorbedWall = true;
+			break;
+		}
+	}
+}
 
 
 

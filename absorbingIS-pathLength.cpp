@@ -16,7 +16,7 @@ using namespace std;
 
 int main(){
 
-	size_t seed = 4;
+	size_t seed = 302;
 	Generator G(seed);
 	//GEOMETRY AND OPTICAL CONSTANTS
 	double R = 0.5;
@@ -26,8 +26,8 @@ int main(){
 	double b_p = 0.125/2.0;
 	double r_e = 2.0*b_p;
 	double r_port = 0.0;
-	double alpha = 1.2786;
-	double rho = 0.99;
+	double alpha = 0.00000001;
+	double rho = 0.95;
 	double n = 1.0;
 	double NA_s = 0.22;
 	double NA = 0.22;
@@ -42,10 +42,10 @@ int main(){
 
 
 	
-	double R0 = 0.25;
+	double R0 = 0.5;
 	double d_R = 0.025;
-	int N_R = 26;
-	int N_avg = 100;
+	int N_R = 3;
+	int N_avg = 5;
 	double N_avg_d = (double) N_avg;
 	vector<double> R_vec(N_R);
 
@@ -91,6 +91,7 @@ int main(){
 
 			for(size_t i=0; i<N_photons; i++){
 				tracePhotonEmptyIS(photons[i], R_vec[j], rho, z_s, cos_theta0, a_p, b_p, collision_limit, G);
+				//tracePhotonAbsorbingIS(photons[i], R_vec[j], rho, z_s, cos_theta0, a_p, b_p, collision_limit, alpha, G);
 			}
 			getStats(photons, eps_c[k], eps_e[k], eps_w[k], N_photons);
 			//savePaths(photons, "data/emptyIS-pathLength/paths.txt",N_photons);
@@ -161,7 +162,7 @@ int main(){
 	cout << "numbers generated: " << G.count << endl;
 
 	ofstream myFile;
-	myFile.open("data/transparentIS_final/105x105_rho99_t.txt");
+	myFile.open("data/absorbingIS/empty.txt");
 	myFile << "#Empty integrating sphere. Lambertian reflectance. No ports for fluid." << endl
 		<< "#Length units in [mm]" << endl
 		<< "#Reflectivity of interior wall: rho = " << rho << endl

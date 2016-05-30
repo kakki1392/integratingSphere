@@ -53,10 +53,23 @@ void tracePhotonAbsorbingIS(Photon &p, double &R, double &rho, double &z_s, doub
 
 void getStats(std::vector<Photon> &photons, double &eps_c, double &eps_e, double &eps_w, size_t &N);
 
+void getStatsWeighted(std::vector<Photon> &photons, double &eps_c, double &eps_e, double &eps_w, double &eps_i, size_t &N);
+
+
 double getMeanPathLength(std::vector<Photon> &photons, size_t &N);
+
+double getMeanPathLengthWeighted(std::vector<Photon> &photons, size_t &N);
 
 double getStdPathLength(std::vector<Photon> &photons, double meanPath, size_t &N);
 
+double getStdPathLengthWeighted(std::vector<Photon> &photons, double meanPath, size_t &N);
+
 void savePaths(std::vector<Photon> &photons, std::string fileName, size_t &N);
+
+void henveyScatter(Dir &u, double &g, Generator &G);
+
+void tracePhotonTurbidIS(Photon &p, double &R, double &rho, double &z_s, double &cos_theta0, double &a_p, double &b_p, size_t &scatter_limit, double &albedo, double &alpha_t, double &g, double &m,double &w_t,  Generator &G);
+
+
 #endif
 

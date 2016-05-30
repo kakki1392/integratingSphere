@@ -16,7 +16,7 @@ using namespace std;
 
 int main(){
 
-	size_t seed = 4;
+	size_t seed = 2000;
 	Generator G(seed);
 	//GEOMETRY AND OPTICAL CONSTANTS
 	double R = 0.5;
@@ -26,8 +26,14 @@ int main(){
 	double b_p = 0.125/2.0;
 	double r_e = 2.0*b_p;
 	double r_port = 0.0;
-	double alpha = 1.2786;
-	double rho = 0.99;
+	double alpha_a = 0.0;
+	double alpha_s = 1.0;
+	double alpha_t = alpha_a + alpha_s;
+	double albedo = alpha_a/alpha_t;
+	double m = 10.0;
+	double g = 0.85;
+	double w_t = 0.00001;
+	double rho = 0.96;
 	double n = 1.0;
 	double NA_s = 0.22;
 	double NA = 0.22;
@@ -37,25 +43,28 @@ int main(){
 	//double z_s = sqrt(R*R - r_e*r_e);
 
 	size_t collision_limit = 50000;
-	size_t N_photons = 1e6;
+	size_t scatter_limit = 100;
+	size_t N_photons = 1e5;
 	double N_d = (double) N_photons;
 
 
 	
-	double R0 = 0.25;
+	double R0 = 0.3;
 	double d_R = 0.025;
-	int N_R = 26;
-	int N_avg = 100;
+	int N_R = 3;
+	int N_avg = 10;
 	double N_avg_d = (double) N_avg;
 	vector<double> R_vec(N_R);
 
 	vector<double> eps_c_mean(N_R);
 	vector<double> eps_e_mean(N_R);
 	vector<double> eps_w_mean(N_R);
+	vector<double> eps_i_mean(N_R);
 
 	vector<double> eps_c_std(N_R);
 	vector<double> eps_e_std(N_R);
 	vector<double> eps_w_std(N_R);
+	vector<double> eps_i_std(N_R);
 
 	vector<double> mean_path_avg(N_R);
 	vector<double> std_mean_path_avg(N_R);
@@ -73,6 +82,7 @@ int main(){
 		vector<double> eps_c(N_avg);
 		vector<double> eps_e(N_avg);
 		vector<double> eps_w(N_avg);
+		vector<double> eps_i(N_avg);
 
 		vector<double> mean_path(N_avg);
 		vector<double> std_path(N_avg);
@@ -85,17 +95,20 @@ int main(){
 			eps_c[k] = 0.0;
 			eps_e[k] = 0.0;
 			eps_w[k] = 0.0;
+			eps_i[k] = 0.0;
 
 			mean_path[k] = 0.0;
 			std_path[k] = 0.0;
 
 			for(size_t i=0; i<N_photons; i++){
-				tracePhotonEmptyIS(photons[i], R_vec[j], rho, z_s, cos_theta0, a_p, b_p, collision_limit, G);
+				//tracePhotonEmptyIS(photons[i], R_vec[j], rho, z_s, cos_theta0, a_p, b_p, collision_limit, G);
+				tracePhotonTurbidIS(photons[i], R_vec[j], rho, z_s, cos_theta0, a_p, b_p, scatter_limit, albedo, alpha_t, g, m, w_t, G);
+
 			}
-			getStats(photons, eps_c[k], eps_e[k], eps_w[k], N_photons);
+			getStatsWeighted(photons, eps_c[k], eps_e[k], eps_w[k], eps_i[k], N_photons);
 			//savePaths(photons, "data/emptyIS-pathLength/paths.txt",N_photons);
-			mean_path[k] = getMeanPathLength(photons,N_photons);
-			std_path[k] = getStdPathLength(photons, mean_path[k], N_photons);
+			mean_path[k] = getMeanPathLengthWeighted(photons,N_photons);
+			std_path[k] = getStdPathLengthWeighted(photons, mean_path[k], N_photons);
 			//cout << "mean path: " << meanPath << " std path: " << stdPath << endl;
 			//cout << "stats: " << eps_c << " " << eps_e << " " << eps_w << endl;
 		}
@@ -103,6 +116,7 @@ int main(){
 		eps_c_mean[j] = 0.0;
 		eps_e_mean[j] = 0.0;
 		eps_w_mean[j] = 0.0;
+		eps_i_mean[j] = 0.0;
 
 		mean_path_avg[j] = 0.0;
 		std_path_avg[j] = 0.0;
@@ -111,6 +125,7 @@ int main(){
 			eps_c_mean[j] += eps_c[i];
 			eps_e_mean[j] += eps_e[i];
 			eps_w_mean[j] += eps_w[i];
+			eps_i_mean[j] += eps_i[i];
 
 			mean_path_avg[j] += mean_path[i];
 			std_path_avg[j] += std_path[i];
@@ -118,6 +133,8 @@ int main(){
 		eps_c_mean[j] = eps_c_mean[j]/N_avg_d;
 		eps_e_mean[j] = eps_e_mean[j]/N_avg_d;
 		eps_w_mean[j] = eps_w_mean[j]/N_avg_d;
+		eps_i_mean[j] = eps_i_mean[j]/N_avg_d;
+
 
 		mean_path_avg[j] = mean_path_avg[j]/N_avg_d;
 		std_path_avg[j] = std_path_avg[j]/N_avg_d;
@@ -127,6 +144,7 @@ int main(){
 		eps_c_std[j] = 0.0;
 		eps_e_std[j] = 0.0;
 		eps_w_std[j] = 0.0;
+		eps_i_std[j] = 0.0;
 
 		std_mean_path_avg[j] = 0.0;
 		std_std_path_avg[j] = 0.0;
@@ -135,6 +153,8 @@ int main(){
 			eps_c_std[j] += (eps_c[i] - eps_c_mean[j])*(eps_c[i] - eps_c_mean[j]);
 			eps_e_std[j] += (eps_e[i] - eps_e_mean[j])*(eps_e[i] - eps_e_mean[j]);
 			eps_w_std[j] += (eps_w[i] - eps_w_mean[j])*(eps_w[i] - eps_w_mean[j]);
+			eps_i_std[j] += (eps_i[i] - eps_i_mean[j])*(eps_i[i] - eps_i_mean[j]);
+
 
 			std_mean_path_avg[j] += (mean_path[i] - mean_path_avg[j])*(mean_path[i] - mean_path_avg[j]);
 			std_std_path_avg[j] += (std_path[i] - std_path_avg[j])*(std_path[i] - std_path_avg[j]);
@@ -144,6 +164,8 @@ int main(){
 		eps_c_std[j] = sqrt(eps_c_std[j]/(N_avg_d - 1.0));
 		eps_e_std[j] = sqrt(eps_e_std[j]/(N_avg_d - 1.0));
 		eps_w_std[j] = sqrt(eps_w_std[j]/(N_avg_d - 1.0));
+		eps_i_std[j] = sqrt(eps_i_std[j]/(N_avg_d - 1.0));
+
 
 		std_mean_path_avg[j] = sqrt(std_mean_path_avg[j]/(N_avg_d - 1.0));
 		std_std_path_avg[j] = sqrt(std_std_path_avg[j]/(N_avg_d - 1.0));
@@ -161,7 +183,7 @@ int main(){
 	cout << "numbers generated: " << G.count << endl;
 
 	ofstream myFile;
-	myFile.open("data/transparentIS_final/105x105_rho99_t.txt");
+	myFile.open("data/turbidIS/test4.txt");
 	myFile << "#Empty integrating sphere. Lambertian reflectance. No ports for fluid." << endl
 		<< "#Length units in [mm]" << endl
 		<< "#Reflectivity of interior wall: rho = " << rho << endl
@@ -180,11 +202,11 @@ int main(){
 		<< "#Number of R-values: N_R = " << N_R << endl
 		<< "#Delta R: d_R = " << d_R << endl
 		<< "#Seed: " << seed << endl << "#" << endl
-		<< "#R <eps_c> <eps_e> <eps_w> std_eps_c std_eps_e std_eps_w <<path>> std<path> <std_path> <<std_path>>" << endl;
+		<< "#R <eps_c> <eps_e> <eps_w> <eps_i> std_eps_c std_eps_e std_eps_w std_eps_i <<path>> std<path> <std_path> <<std_path>>" << endl;
 	for(int i=0; i<N_R; i++){
 		myFile << setprecision(5) << fixed << R_vec[i] << " " << setprecision(10) << fixed << eps_c_mean[i] << " " << eps_e_mean[i] << " " << eps_w_mean[i]
-		       	<< " " << eps_c_std[i] << " " << eps_e_std[i] << " " << eps_w_std[i] << " " << mean_path_avg[i] << " " << std_mean_path_avg[i]
-		        << " " << std_path_avg[i] << " " << std_std_path_avg[i] << endl;
+		       	<< " " << eps_i_mean[i] << " " << eps_c_std[i] << " " << eps_e_std[i] << " " << eps_w_std[i] << " " << eps_i_std[i] << " " << mean_path_avg[i] 
+			<< " " << std_mean_path_avg[i] << " " << std_path_avg[i] << " " << std_std_path_avg[i] << endl;
 	}
 	myFile.close();
 

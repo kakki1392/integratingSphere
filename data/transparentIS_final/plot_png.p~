@@ -1,0 +1,2 @@
+set term pngcairo
+set terminal pngcairo enhanced size 1440,900 crop font "Palatino,27"

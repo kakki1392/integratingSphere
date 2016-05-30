@@ -363,9 +363,7 @@ void tracePhotonEmptyIS(Photon &p, double &R, double &rho, double &z_s, double &
 						//cout << "collected!" << endl;
 						p.s_tot += s;
 						break;
-					}
-					else{
-						p.isAbsorbedEntrance = true;
+					} else{ p.isAbsorbedEntrance = true;
 						p.s_tot += s;
 						break;
 					}
@@ -402,6 +400,29 @@ void getStats(std::vector<Photon> &photons, double &eps_c, double &eps_e, double
 	eps_e = eps_e/N_d;
 	eps_w = eps_w/N_d;
 }
+
+void getStatsWeighted(std::vector<Photon> &photons, double &eps_c, double &eps_e, double &eps_w, double &eps_i, size_t &N){
+	double N_d = (double) N;
+	eps_c = 0.0;
+	eps_e = 0.0;
+	eps_w = 0.0;
+	eps_i = 0.0;
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			eps_c += photons[i].W;
+		}else if(photons[i].isAbsorbedEntrance){
+			eps_e += photons[i].W;
+		}else if(photons[i].isAbsorbedWall){ 
+			eps_w += photons[i].W;
+		}else if(photons[i].isAbsorbedInterior){
+			eps_i += photons[i].W;
+		}
+	}
+	eps_c = eps_c/N_d;
+	eps_e = eps_e/N_d;
+	eps_w = eps_w/N_d;
+	eps_i = eps_i/N_d;
+}
 		
 double getMeanPathLength(std::vector<Photon> &photons, size_t &N){
 	double meanPath = 0.0;
@@ -413,6 +434,19 @@ double getMeanPathLength(std::vector<Photon> &photons, size_t &N){
 		}
 	}
 	meanPath = (meanPath/N_collected);
+	return meanPath;
+}
+
+double getMeanPathLengthWeighted(std::vector<Photon> &photons, size_t &N){
+	double meanPath = 0.0;
+	double collected_weight = 0.0;
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			meanPath += photons[i].W*photons[i].s_tot;
+			collected_weight += photons[i].W;
+		}
+	}
+	meanPath = (meanPath/collected_weight);
 	return meanPath;
 }
 
@@ -429,6 +463,24 @@ double getStdPathLength(std::vector<Photon> &photons, double meanPath, size_t &N
 		cout << "BAD" << endl;
 	}
 	stdPath = std::sqrt(stdPath/(N_collected-1.0)); //WAS ERROR HERE
+	return stdPath;
+}
+
+double getStdPathLengthWeighted(std::vector<Photon> &photons, double meanPath, size_t &N){
+	double stdPath = 0.0;
+	double N_collected = 0.0;
+	double collected_weight = 0.0;
+	for(size_t i=0; i<N; i++){
+		if(photons[i].isCollected){
+			stdPath += photons[i].W*(photons[i].s_tot - meanPath)*(photons[i].s_tot - meanPath);
+			collected_weight += photons[i].W;
+			N_collected += 1.0;
+		}
+	}
+	if(N_collected < 1.0){
+		cout << "BAD" << endl;
+	}
+	stdPath = std::sqrt((N_collected/(collected_weight*(N_collected - 1.0)))*stdPath);
 	return stdPath;
 }
 
@@ -451,9 +503,6 @@ void tracePhotonAbsorbingIS(Photon &p, double &R, double &rho, double &z_s, doub
 //	cout << "dot_prod: " << dot_prod << endl;
 	s0 = -dot_prod + sqrt(dot_prod*dot_prod + R*R - p.r.square());
 //	cout << "s0 first: " << s0 << endl;
-
-
-
 
 	if(s0 < path){
 		p.s_tot += s0;
@@ -525,13 +574,139 @@ void tracePhotonAbsorbingIS(Photon &p, double &R, double &rho, double &z_s, doub
 	}
 }
 
+void henveyScatter(Dir &u, double &g, Generator &G){
+	double u_x_temp = u.u_x;
+	double u_y_temp = u.u_y;
+	double u_z_temp = u.u_z;
+	double chi_1 = G.uniform();
+	double chi_2 = G.uniform();
+	double cos_theta = (1.0/(2.0*g))*(1.0 + g*g - ((1.0-g*g)/(1.0 - g + 2.0*g*chi_1))*((1.0-g*g)/(1.0 - g + 2.0*g*chi_1)));
+	double sin_theta = std::sqrt(1.0-cos_theta*cos_theta);
+	double psi = 2.0*M_PI*chi_2;
+	double cos_psi = std::cos(psi);
+	double sin_psi = std::sin(psi);
 
+	u.u_x = (sin_theta/(std::sqrt(1.0-u_z_temp*u_z_temp)))*(u_x_temp*u_z_temp*cos_psi - u_y_temp*sin_psi) + u_x_temp*cos_theta;
+	u.u_y = (sin_theta/(std::sqrt(1.0-u_z_temp*u_z_temp)))*(u_y_temp*u_z_temp*cos_psi + u_x_temp*sin_psi) + u_y_temp*cos_theta;
+	u.u_z = -sin_theta*cos_psi*std::sqrt(1.0-u_z_temp*u_z_temp) + u_z_temp*cos_theta; 
 
+	double norm = u.norm();
+	u.u_x = u.u_x/norm;
+	u.u_y = u.u_y/norm;
+	u.u_z = u.u_z/norm;
+}
 
+void tracePhotonTurbidIS(Photon &p, double &R, double &rho, double &z_s, double &cos_theta0, double &a_p, double &b_p, size_t &scatter_limit, double &albedo, double &alpha_t, double &g, double &m,double &w_t,  Generator &G){
 
+	double l = drawPathLength(alpha_t, G);
+	//cout << "First l: " << l << endl;
+	Coord r;
 
+	while(p.N_s < scatter_limit){
+		//New position
+		r.x = p.r.x + l*p.u.u_x;
+		r.y = p.r.y + l*p.u.u_y;
+		r.z = p.r.z + l*p.u.u_z;
 
-
+		//is position inside sphere?
+		if(r.norm() < R){
+			//cout << "Entering position inside sphere" << endl;
+			p.s_tot += l;
+			p.W -= p.W*albedo;
+			if(p.W < w_t){
+				//cout << "Entering below threshold" << endl;
+				if(G.uniform() < (1.0/m)){
+					//cout << "Survived roulette" << endl;
+					p.W = m*p.W;
+				}
+				else{
+					//cout << "Did not survive roulette" << endl;
+					p.isAbsorbedInterior = true;
+					break;
+				}
+			}
+			l = drawPathLength(alpha_t, G);
+			//cout << "New l: " << l << endl;
+			henveyScatter(p.u, g, G);
+			//cout << "isScattered" << endl;
+			p.N_s ++;
+			//update position
+			p.r.x = r.x;
+			p.r.y = r.y;
+			p.r.z = r.z;
+			//cout << "New interior position, r: " << p.r.norm() << endl;
+		}
+		else{
+			//cout << "Entering finding intercept" << endl;
+			//find intercept
+			double dot_prod = p.r.x*p.u.u_x + p.r.y*p.u.u_y + p.r.z*p.u.u_z;
+			double r_square = p.r.square();
+			double s0_plus = - dot_prod + std::sqrt(dot_prod*dot_prod + R*R - r_square);
+			double s0_minus = - dot_prod - std::sqrt(dot_prod*dot_prod + R*R - r_square);
+			double s0 = 0.0;
+			if(s0_plus > 0.0){
+				s0 = s0_plus;
+			}else{
+				s0 = s0_minus;
+			}
+			//cout << "s0_plus: " << s0_plus << endl;
+			//cout << "s0_minus: " << s0_minus << endl;
+			//cout << "s0: " << s0 << endl;
+			//check if in port area
+			double z = p.r.z + s0*p.u.u_z;
+			if(z>z_s){
+				//cout << "Entering is in port area" << endl;
+				//distance to entrance port plane
+				double s = (z_s - p.r.z)/p.u.u_z;
+				if(p.u.u_z < cos_theta0){
+					//cout << "not in NA" << endl;
+					p.isAbsorbedEntrance = true;
+					p.s_tot += s;
+					break;
+				}
+				else{
+					//cout << "NA passed, entering core check" << endl;
+					double x = p.r.x + s*p.u.u_x;
+					double y = p.r.y + s*p.u.u_y;
+					if(((x-b_p)*(x-b_p) + y*y) < (a_p*a_p)){
+						//cout << "Core check complete, collected" << endl;
+						p.isCollected = true;
+						//cout << "collected!" << endl;
+						p.s_tot += s;
+						break;
+					}
+					else{
+						//cout << "Core check complete, not collected" << endl;
+						p.isAbsorbedEntrance = true;
+						p.s_tot += s;
+						break;
+					}
+				}
+			}
+			//cout << "Moving photon to wall" << endl;
+			//photon is not in entrance, move it
+			p.r.x = p.r.x + s0*p.u.u_x;
+			p.r.y = p.r.y + s0*p.u.u_y;
+			p.r.z = p.r.z + s0*p.u.u_z;
+			//cout << "Surface position, r: " << p.r.norm() << endl;
+			p.s_tot += s0;
+			l -= s0;
+			//cout << "New reduced l: " << l << endl;
+			//reflection?
+			if(G.uniform() < rho){
+				//cout << "Reflected" << endl;
+				diffuseLocal(p.u, G);
+				p.u = convertToGlobal(p.u, p.r, R);
+				p.N_w ++;
+			}
+			else{
+				//cout << "Not reflected" << endl;
+				p.isAbsorbedWall = true;
+				break;
+			}
+		}
+	}
+}
 
 
 

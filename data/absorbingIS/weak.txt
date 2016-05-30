@@ -1,0 +1,26 @@
+#Empty integrating sphere. Lambertian reflectance. No ports for fluid.
+#Length units in [mm]
+#Reflectivity of interior wall: rho = 0.95
+#Refractive index interior medium: n = 1
+#
+#Source fiber:
+# - core diameter: 2*a_s = 0.105
+# - clad diameter: 2*b_s = 0.125
+# - numerical aperture: NA_s = 0.22
+#
+#Pick-up fiber:
+# - core diameter: 2*a_p = 0.105
+# - clad diameter: 2*b_p = 0.125
+# - numerical aperture: NA_p = 0.22
+#
+#Entrance radius: r_e = 2*b_p = 0.125
+#Number of photons: N = 1000000
+#Number of averages: N_avg = 5
+#Number of R-values: N_R = 3
+#Delta R: d_R = 0.025
+#Seed: 301
+#
+#R <eps_c> <eps_e> <eps_w> std_eps_c std_eps_e std_eps_w <<path>> std<path> <std_path> <<std_path>>
+0.50000 0.0035350000 0.2283838000 0.7680812000 0.0000250898 0.0005062812 0.0004899405 7.4322304677 0.1462093226 9.0081769950 0.2468138801
+0.52500 0.0032956000 0.2108946000 0.7858098000 0.0000307864 0.0005572874 0.0005852476 7.7217446141 0.1238001593 9.4064269250 0.2646183966
+0.55000 0.0030968000 0.1959326000 0.8009706000 0.0000425464 0.0006389455 0.0006023365 8.1858972227 0.1253323274 10.0208324332 0.1125976582

@@ -1,0 +1,18 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+n1 = 200
+n2 = 4
+rho = np.linspace(0.5,0.99, n1)
+eps = np.zeros((n1,n2))
+f = np.linspace(0.01, 0.1, n2)
+R_c = 0.105/2.0
+R = 0.5
+A_c = np.pi*R_c**2
+A = 4.0*np.pi*R**2
+
+for i in np.arange(n2):
+        eps[:,i] = (A_c/A)*(rho[:]/(1-rho[:]*(1.0-f[i])))*0.22**2
+
+plt.plot(rho[:], eps[:,0], rho, eps[:,2])
+plt.show()

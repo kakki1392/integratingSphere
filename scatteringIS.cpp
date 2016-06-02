@@ -16,7 +16,7 @@ using namespace std;
 
 int main(){
 
-	size_t seed = 19002;
+	size_t seed = 13002;
 	Generator G(seed);
 	//GEOMETRY AND OPTICAL CONSTANTS
 	double R = 0.5;
@@ -31,9 +31,9 @@ int main(){
 	double alpha_t = alpha_a + alpha_s;
 	double albedo = alpha_a/alpha_t;
 	double m = 10.0;
-	double g = 0.3;
+	double g = 0.9;
 	double w_t = 0.00001;
-	double rho = 0.95;
+	double rho = 0.99;
 	double n = 1.0;
 	double NA_s = 0.22;
 	double NA = 0.22;
@@ -51,7 +51,7 @@ int main(){
 	
 	double alpha_s0 = 0.1;
 	double d_alpha_s = 0.3;
-	int N_alpha_s = 10;
+	int N_alpha_s = 18;
 	int N_avg = 100;
 	double N_avg_d = (double) N_avg;
 	vector<double> alpha_s_vec(N_alpha_s);
@@ -222,7 +222,7 @@ int main(){
 	cout << "numbers generated: " << G.count << endl;
 
 	ofstream myFile;
-	myFile.open("data/scatteringIS_final/full_rho95_g0.3.txt");
+	myFile.open("data/scatteringIS_final/full_rho99_g0.9_new_t.txt");
 	myFile << "#Empty integrating sphere. Lambertian reflectance. No ports for fluid." << endl
 		<< "#Length units in [mm]" << endl
 		<< "#Reflectivity of interior wall: rho = " << rho << endl
@@ -260,7 +260,7 @@ int main(){
 	}
 
 	ofstream myFile2;
-	myFile2.open("data/scatteringIS_final/A_rho95_g0.3.txt");
+	myFile2.open("data/scatteringIS_final/A_rho99_g0.9_new_t.txt");
 	myFile2 << "#Empty integrating sphere. Lambertian reflectance. No ports for fluid." << endl
 		<< "#Length units in [mm]" << endl
 		<< "#Reflectivity of interior wall: rho = " << rho << endl

@@ -16,7 +16,7 @@ using namespace std;
 
 int main(){
 
-	size_t seed = 7002;
+	size_t seed = 7012;
 	Generator G(seed);
 	//GEOMETRY AND OPTICAL CONSTANTS
 	double R = 0.5;
@@ -27,10 +27,10 @@ int main(){
 	double r_e = 2.0*b_p;
 	double r_port = 0.0;
 	//double alpha = 0.00000001;
-	double rho = 0.95;
+	double rho = 0.99;
 	double n = 1.0;
 	double NA_s = 0.22;
-	double NA = 0.22;
+	double NA = 0.5;
 	double cos_theta0 = sqrt(1.0 - (NA*NA)/(n*n));
 	double cos_theta0_s = sqrt(1.0 - (NA_s*NA_s)/(n*n));
 
@@ -209,7 +209,7 @@ int main(){
 	cout << "numbers generated: " << G.count << endl;
 
 	ofstream myFile;
-	myFile.open("data/absorbingIS_final/full_rho95_t.txt");
+	myFile.open("data/absorbingIS_final/full_rho99_NA0.5_t.txt");
 	myFile << "#Empty integrating sphere. Lambertian reflectance. No ports for fluid." << endl
 		<< "#Length units in [mm]" << endl
 		<< "#Reflectivity of interior wall: rho = " << rho << endl
@@ -249,7 +249,7 @@ int main(){
 	}
 
 	ofstream myFile2;
-	myFile2.open("data/absorbingIS_final/A_rho95_t.txt");
+	myFile2.open("data/absorbingIS_final/A_rho99_NA0.5_t.txt");
 	myFile2 << "#Empty integrating sphere. Lambertian reflectance. No ports for fluid." << endl
 		<< "#Length units in [mm]" << endl
 		<< "#Reflectivity of interior wall: rho = " << rho << endl

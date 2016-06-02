@@ -5,10 +5,10 @@ set term pdfcairo enhanced font ",12" size 5,3
 #set style line 3 lt rgb "#3182bd" lw 2 pt 2
 #set style line 4 lt rgb "#08519c" lw 2 pt 9
 
-set style line 1 linetype 1 linecolor rgb "#332288" linewidth 4 pointtype 1
-set style line 2 linetype 1 linecolor rgb "#88CCEE" linewidth 4 pointtype 2
-set style line 3 linetype 1 linecolor rgb "#999933" linewidth 4 pointtype 3
-set style line 4 linetype 1 linecolor rgb "#AA4499" linewidth 4 pointtype 4
+set style line 1 linetype 1 linecolor rgb "#332288" linewidth 4 pointtype 4 pointsize 2
+set style line 2 linetype 1 linecolor rgb "#88CCEE" linewidth 4 pointtype 5 pointsize 2
+set style line 3 linetype 1 linecolor rgb "#999933" linewidth 4 pointtype 6 pointsize 2
+set style line 4 linetype 1 linecolor rgb "#AA4499" linewidth 4 pointtype 7 pointsize 2
 
 set output "test.pdf"
 set xrange [0:3.5]

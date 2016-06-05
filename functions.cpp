@@ -414,9 +414,14 @@ void getStatsWeighted(std::vector<Photon> &photons, double &eps_c, double &eps_e
 			eps_e += photons[i].W;
 		}else if(photons[i].isAbsorbedWall){ 
 			eps_w += photons[i].W;
-		}else if(photons[i].isAbsorbedInterior){
+		}
+		
+		/*
+		else if(photons[i].isAbsorbedInterior){
 			eps_i += photons[i].W;
 		}
+		*/
+		eps_i += photons[i].W_interior;
 	}
 	eps_c = eps_c/N_d;
 	eps_e = eps_e/N_d;
@@ -612,6 +617,7 @@ void tracePhotonTurbidIS(Photon &p, double &R, double &rho, double &z_s, double 
 		if(r.norm() < R){
 			//cout << "Entering position inside sphere" << endl;
 			p.s_tot += l;
+			p.W_interior += p.W*albedo;
 			p.W -= p.W*albedo;
 			if(p.W < w_t){
 				//cout << "Entering below threshold" << endl;
@@ -622,6 +628,7 @@ void tracePhotonTurbidIS(Photon &p, double &R, double &rho, double &z_s, double 
 				else{
 					//cout << "Did not survive roulette" << endl;
 					p.isAbsorbedInterior = true;
+					//p.W = 1.0; //We don't need spatial information, everything is lost to the medium
 					break;
 				}
 			}

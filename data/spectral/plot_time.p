@@ -11,14 +11,17 @@ set style line 2 linetype 1 linecolor rgb "#88CCEE" linewidth 3 pointtype 5 poin
 set style line 3 linetype 1 linecolor rgb "#999933" linewidth 3 pointtype 6 pointsize 0.5
 set style line 4 linetype 1 linecolor rgb "#AA4499" linewidth 3 pointtype 7 pointsize 0.5
 
-set output "scatteringG.pdf"
+set output "time_elapsed.pdf"
 set xtics nomirror
 set ytics nomirror
 set border 3 lw 2
 set key right top spacing "1.3"
 
+#set xrange[0.6:1.8]
+#set yrange[0.05:0.13]
+
 #set xlabel "NA"
 #set ylabel " "
 
-plot "full_rho95_g0.9.txt" u 1:(100*$2) w linespoints ls 1 t ' ', "full_rho95_g0.6.txt" u 1:(100*$2) w linespoints ls 2 t ' ', "full_rho95_g0.3.txt" u 1:(100*$2) w linespoints ls 3 t ' ' 
+plot "time_elapsed.txt" u 1:2 w lines ls 1 notitle, "end_points" u 1:2 w points ls 1 notitle
 unset output

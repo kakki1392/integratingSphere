@@ -25,6 +25,8 @@ class Photon{
 		bool isAbsorbedEntrance;
 		bool isAbsorbedPort;
 
+		double W_interior;
+
 
 
 	private:
